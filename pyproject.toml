@@ -1,0 +1,49 @@
+[project]
+name = "syncflow"
+version = "0.0.1"
+description = "Reusable Python client implementation for SyncFlow."
+authors = [
+    {name = "Umesh Timalsina", email="umesh.timalsina@vanderbilt.edu"}
+]
+license = {file = "LICENSE"}
+readme = "README.md"
+requires-python = ">3.6"
+
+keywords = ["multimodal", "data", "distributed", "streaming", "real-time"]
+
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Education",
+    "Intended Audience :: Science/Research",
+    "Topic :: Scientific/Engineering",
+    "Topic :: Software Development",
+    "Topic :: Software Development :: Libraries",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+]
+
+dependencies = [
+    "pydantic",
+    "httpx",
+    "pyjwt"
+]
+
+
+[project.urls]
+homepath = "https://github.com/chimerapy/Orchestrator"
+documentation = "https://github.com/chimerapy/Orchestrator"
+repository = "https://github.com/chimerapy/Orchestrator"
+
+
+
+[build-system]
+requires = ["setuptools", "wheel"]
+build-backend = "setuptools.build_meta"
+
+# https://setuptools.pypa.io/en/stable/userguide/datafiles.html
+[tool.setuptools]
+include-package-data = true
+
+
+[tool.setuptools.packages.find]
+where = ["."]
