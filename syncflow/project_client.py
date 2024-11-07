@@ -4,8 +4,9 @@ import time
 import httpx
 import jwt
 
-from syncflow.models import ProjectTokenClaims, RegisterDeviceRequest
-
+from syncflow.models import ProjectTokenClaims, RegisterDeviceRequest, CreateSessionRequest, TokenRequest, ProjectSessionResponse, ProjectInfo, TokenResponse, DeviceResponse
+from livekit.api import ParticipantInfo
+from typing import List
 
 
 class ProjectClient:
@@ -35,58 +36,102 @@ class ProjectClient:
         decoded_jwt = jwt.decode(token, self.api_secret, algorithms=["HS256"])
         api_token = ProjectTokenClaims.model_validate(decoded_jwt)
         return api_token.is_expired()
-    
-    async def list_sessions(self):
-        jwt = self.api_token
-        response = await self.httpx_client.get(
-            f"/projects/{self.project_id}/sessions",
-            headers={
-                "Authorization": f"Bearer {jwt}",
-                "Content-Type": "application/json",
-            },
-        )
+
+    async def authorized_fetch(self, url, method="GET", data=None):
+        """
+        Perform an authorized API fetch with the necessary headers.
+
+        Args:
+            url (str): The API endpoint URL.
+            method (str, optional): The HTTP method. Defaults to "GET".
+            data (dict, optional): The request payload. Defaults to None.
+
+        Returns:
+            Any: The API response JSON parsed into a Pydantic model.
+        """
+        jwt_token = self.api_token
+        headers = {
+            "Authorization": f"Bearer {jwt_token}",
+            "Content-Type": "application/json",
+        }
+
+        if method == "GET":
+            response = await self.httpx_client.get(url, headers=headers)
+        elif method == "POST":
+            response = await self.httpx_client.post(url, headers=headers, json=data)
+        elif method == "PUT":
+            response = await self.httpx_client.put(url, headers=headers, json=data)
+        elif method == "DELETE":
+            response = await self.httpx_client.delete(url, headers=headers)
+        else:
+            raise ValueError(f"Unsupported HTTP method: {method}")
 
         response.raise_for_status()
         return response.json()
 
-    async def summarize_project(self):
-        jwt = self.api_token
-        response = await self.httpx_client.get(
-            f"/projects/{self.project_id}/summarize",
-            headers={
-                "Authorization": f"Bearer {jwt}",
-                "Content-Type": "application/json",
-            },
+    async def get_project_details(self) -> ProjectInfo:
+        response_data = await self.authorized_fetch(f"/projects/{self.project_id}")
+        return ProjectInfo.model_validate(response_data)
+
+    async def delete_project(self) -> ProjectInfo:
+        response_data = await self.authorized_fetch(f"/projects/{self.project_id}", method="DELETE")
+        return ProjectInfo.model_validate(response_data)
+
+    async def summarize_project(self) -> ProjectInfo:
+        response_data = await self.authorized_fetch(f"/projects/{self.project_id}/summarize")
+        return ProjectInfo.model_validate(response_data)
+
+    async def create_session(self, new_session_request: CreateSessionRequest) -> ProjectSessionResponse:
+        response_data = await self.authorized_fetch(
+            f"/projects/{self.project_id}/create-session", method="POST", data=new_session_request.dict()
         )
+        return ProjectSessionResponse.model_validate(response_data)
 
-        response.raise_for_status()
-        return response.json()
+    async def list_sessions(self) -> List[ProjectSessionResponse]:
+        response_data = await self.authorized_fetch(f"/projects/{self.project_id}/sessions")
+        return [ProjectSessionResponse.model_validate(session) for session in response_data]
 
-    async def register_device(self, device: RegisterDeviceRequest):
-        jwt = self.api_token
+    async def list_session(self, session_id: str) -> ProjectSessionResponse:
+        response_data = await self.authorized_fetch(f"/projects/{self.project_id}/sessions/{session_id}")
+        return ProjectSessionResponse.model_validate(response_data)
 
-        response = await self.httpx_client.post(
-            f"/projects/{self.project_id}/devices/register",
-            headers={
-                "Authorization": f"Bearer {jwt}",
-                "Content-Type": "application/json",
-            },
-            json=device.model_dump(mode="json", by_alias=True),
+    async def list_participants(self, session_id: str) -> List[ParticipantInfo]:
+        response_data = await self.authorized_fetch(f"/projects/{self.project_id}/sessions/{session_id}/participants")
+        return [ParticipantInfo.model_validate(participant) for participant in response_data]
+
+    async def generate_session_token(self, session_id: str, token_request: TokenRequest) -> TokenResponse:
+        response_data = await self.authorized_fetch(
+            f"/projects/{self.project_id}/sessions/{session_id}/token", method="POST", data=token_request.model_dump(mode="json", by_alias=True)
         )
-        response.raise_for_status()
-        return response.json()
+        return TokenResponse.model_validate(response_data)
 
-    async def list_devices(self):
-        jwt = self.api_token
-        response = await self.httpx_client.get(
-            f"/projects/{self.project_id}/devices",
-            headers={
-                "Authorization": f"Bearer {jwt}",
-                "Content-Type": "application/json",
-            },
+    async def get_livekit_session_info(self, session_id: str) -> dict:
+        response_data = await self.authorized_fetch(f"/projects/{self.project_id}/sessions/{session_id}/livekit-session-info")
+        return response_data
+
+    async def stop_session(self, session_id: str) -> ProjectSessionResponse:
+        response_data = await self.authorized_fetch(
+            f"/projects/{self.project_id}/sessions/{session_id}/stop", method="POST", data={}
         )
-        response.raise_for_status()
-        return response.json()
+        return ProjectSessionResponse.model_validate(response_data)
+
+    async def register_device(self, device: RegisterDeviceRequest) -> DeviceResponse:
+        response_data = await self.authorized_fetch(
+            f"/projects/{self.project_id}/devices/register", method="POST", data=device.dict()
+        )
+        return DeviceResponse.model_validate(response_data)
+
+    async def list_devices(self) -> List[DeviceResponse]:
+        response_data = await self.authorized_fetch(f"/projects/{self.project_id}/devices")
+        return [DeviceResponse.model_validate(device) for device in response_data]
+
+    async def list_device(self, device_id: str) -> DeviceResponse:
+        response_data = await self.authorized_fetch(f"/projects/{self.project_id}/devices/{device_id}")
+        return DeviceResponse.model_validate(response_data)
+
+    async def delete_device(self, device_id: str) -> DeviceResponse:
+        response_data = await self.authorized_fetch(f"/projects/{self.project_id}/devices/{device_id}", method="DELETE")
+        return DeviceResponse.model_validate(response_data)
 
     async def aclose(self):
         await self.httpx_client.aclose()
