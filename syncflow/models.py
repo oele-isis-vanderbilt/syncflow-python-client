@@ -1,7 +1,10 @@
+import time
+from enum import Enum
+from typing import List, Optional
+
 from pydantic import BaseModel, ConfigDict, Field
 from pydantic.alias_generators import to_camel
-from typing import Optional
-import time
+
 
 class ProjectTokenClaims(BaseModel):
     iat: int = Field()
@@ -38,4 +41,191 @@ class RegisterDeviceRequest(BaseModel):
 
 
 class CreateSessionRequest(BaseModel):
-    
+    name: Optional[str] = Field(
+        None,
+        description="The name of the session",
+    )
+
+    comments: Optional[str] = Field(
+        None,
+        description="Comments about the session",
+    )
+
+    empty_timeout: Optional[int] = Field(
+        None,
+        description="The timeout period when the session is empty",
+    )
+
+    max_participants: Optional[int] = Field(
+        None,
+        description="Maximum number of participants allowed in the session",
+    )
+
+    auto_recording: Optional[bool] = Field(
+        None,
+        description="Whether the session should automatically start recording",
+    )
+
+    device_groups: Optional[List[str]] = Field(
+        None,
+        description="List of device groups associated with the session",
+    )
+
+
+class VideoGrantsWrapper(BaseModel):
+    can_publish: bool = Field(..., description="Permission to publish media streams")
+
+    can_publish_data: bool = Field(..., description="Permission to publish data")
+
+    can_publish_sources: List[str] = Field(
+        ..., description="List of allowed publishing sources"
+    )
+
+    can_subscribe: bool = Field(..., description="Permission to subscribe to streams")
+
+    can_update_own_metadata: bool = Field(
+        ..., description="Permission to update own metadata"
+    )
+
+    hidden: bool = Field(..., description="Whether the participant is hidden")
+
+    ingress_admin: bool = Field(..., description="Permission to administer ingress")
+
+    recorder: bool = Field(..., description="Permission to record")
+
+    room: str = Field(..., description="Room identifier")
+
+    room_admin: bool = Field(..., description="Permission to administer the room")
+
+    room_create: bool = Field(..., description="Permission to create rooms")
+
+    room_join: bool = Field(..., description="Permission to join rooms")
+
+    room_list: bool = Field(..., description="Permission to list rooms")
+
+    room_record: bool = Field(..., description="Permission to record rooms")
+
+    model_config = ConfigDict(
+        alias_generator=to_camel,
+        populate_by_name=True,
+        from_attributes=True,
+    )
+
+
+class TokenRequest(BaseModel):
+    identity: str = Field(
+        ...,
+        description="Identity of the token",
+    )
+
+    name: Optional[str] = Field(
+        None,
+        description="Name of the token",
+    )
+
+    video_grants: VideoGrantsWrapper = Field(
+        ...,
+        description="Video permissions and grant settings for the token",
+    )
+
+
+class ProjectSessionResponse(BaseModel):
+    id: str
+    name: str
+    started_at: int
+    comments: str
+    empty_timeout: int
+    max_participants: int
+    livekit_room_name: str
+    project_id: str
+    status: str
+
+    model_config = ConfigDict(
+        alias_generator=to_camel,
+        populate_by_name=True,
+        from_attributes=True,
+    )
+
+
+class ProjectInfo(BaseModel):
+    id: str
+    name: str
+    description: str
+    livekit_server_url: str
+    storage_type: str
+    bucket_name: str
+    endpoint: str
+    last_updated: int
+
+    model_config = ConfigDict(
+        alias_generator=to_camel,
+        populate_by_name=True,
+        from_attributes=True,
+    )
+
+
+class TokenResponse(BaseModel):
+    token: str
+    identity: str
+    livekit_server_url: Optional[str]
+
+    model_config = ConfigDict(
+        alias_generator=to_camel,
+        populate_by_name=True,
+        from_attributes=True,
+    )
+
+
+class DeviceResponse(BaseModel):
+    id: str
+    name: str
+    group: str
+    comments: Optional[str]
+    registered_at: int
+    registered_by: int
+    project_id: str
+    session_notification_exchange_name: Optional[str]
+    session_notification_binding_key: Optional[str]
+
+    model_config = ConfigDict(
+        alias_generator=to_camel,
+        populate_by_name=True,
+        from_attributes=True,
+    )
+
+
+class ProjectSummary(BaseModel):
+    num_sessions: int
+    num_active_sessions: int
+    num_participants: int
+    num_recordings: int
+
+    model_config = ConfigDict(
+        alias_generator=to_camel,
+        populate_by_name=True,
+        from_attributes=True,
+    )
+
+
+class ParticipantState(str, Enum):
+    CONNECTED = "CONNECTED"
+    DISCONNECTED = "DISCONNECTED"
+    JOINING = "JOINING"
+
+
+class ParticipantInfo(BaseModel):
+    id: str
+    identity: str
+    name: Optional[str] = None
+    state: ParticipantState
+    tracks: List[dict]
+    metadata: str
+    joined_at: int
+    permission: dict
+    is_publisher: bool
+
+    model_config = ConfigDict(
+        alias_generator=to_camel,
+        populate_by_name=True,
+        from_attributes=True,
+    )
