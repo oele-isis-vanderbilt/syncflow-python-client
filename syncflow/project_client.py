@@ -1,11 +1,22 @@
 import os
 import time
+from typing import List
 
 import httpx
 import jwt
 
-from syncflow.models import ProjectTokenClaims, RegisterDeviceRequest, CreateSessionRequest, TokenRequest, ProjectSessionResponse, ProjectInfo, TokenResponse, DeviceResponse, ProjectSummary, ParticipantInfo
-from typing import List
+from syncflow.models import (
+    CreateSessionRequest,
+    DeviceResponse,
+    ParticipantInfo,
+    ProjectInfo,
+    ProjectSessionResponse,
+    ProjectSummary,
+    ProjectTokenClaims,
+    RegisterDeviceRequest,
+    TokenRequest,
+    TokenResponse,
+)
 
 
 class HttpError(Exception):
@@ -13,6 +24,7 @@ class HttpError(Exception):
         self.status_code = status_code
         self.message = message
         super().__init__(f"HTTP {status_code}: {message}")
+
 
 class ProjectClient:
     def __init__(
@@ -22,7 +34,7 @@ class ProjectClient:
         api_key: str = None,
         api_secret: str = None,
     ):
-        self.server_url = server_url or os.getenv("SYNCFLOW_API_URL")
+        self.server_url = server_url or os.getenv("SYNCFLOW_SERVER_URL")
         self.project_id = project_id or os.getenv("SYNCFLOW_PROJECT_ID")
         self.api_key = api_key or os.getenv("SYNCFLOW_API_KEY")
         self.api_secret = api_secret or os.getenv("SYNCFLOW_API_SECRET")
@@ -71,10 +83,10 @@ class ProjectClient:
                 response = await self.httpx_client.delete(url, headers=headers)
             else:
                 raise ValueError(f"Unsupported HTTP method: {method}")
-            
+
             response.raise_for_status()
             return response.json()
-        
+
         except httpx.HTTPStatusError as e:
             raise HttpError(e.response.status_code, e.response.text)
 
@@ -83,63 +95,93 @@ class ProjectClient:
         return ProjectInfo(**response_data)
 
     async def delete_project(self) -> ProjectInfo:
-        response_data = await self.authorized_fetch(f"/projects/{self.project_id}", method="DELETE")
+        response_data = await self.authorized_fetch(
+            f"/projects/{self.project_id}", method="DELETE"
+        )
         return ProjectInfo(**response_data)
 
     async def summarize_project(self) -> ProjectSummary:
-        response_data = await self.authorized_fetch(f"/projects/{self.project_id}/summarize")
+        response_data = await self.authorized_fetch(
+            f"/projects/{self.project_id}/summarize"
+        )
         return ProjectSummary(**response_data)
 
-    async def create_session(self, new_session_request: CreateSessionRequest) -> ProjectSessionResponse:
+    async def create_session(
+        self, new_session_request: CreateSessionRequest
+    ) -> ProjectSessionResponse:
         response_data = await self.authorized_fetch(
-            f"/projects/{self.project_id}/create-session", method="POST", data=new_session_request.dict()
+            f"/projects/{self.project_id}/create-session",
+            method="POST",
+            data=new_session_request.dict(),
         )
         return ProjectSessionResponse(**response_data)
 
     async def list_sessions(self) -> List[ProjectSessionResponse]:
-        response_data = await self.authorized_fetch(f"/projects/{self.project_id}/sessions")
+        response_data = await self.authorized_fetch(
+            f"/projects/{self.project_id}/sessions"
+        )
         return [ProjectSessionResponse(**session) for session in response_data]
 
     async def list_session(self, session_id: str) -> ProjectSessionResponse:
-        response_data = await self.authorized_fetch(f"/projects/{self.project_id}/sessions/{session_id}")
+        response_data = await self.authorized_fetch(
+            f"/projects/{self.project_id}/sessions/{session_id}"
+        )
         return ProjectSessionResponse(**response_data)
 
     async def list_participants(self, session_id: str) -> List[ParticipantInfo]:
-        response_data = await self.authorized_fetch(f"/projects/{self.project_id}/sessions/{session_id}/participants")
+        response_data = await self.authorized_fetch(
+            f"/projects/{self.project_id}/sessions/{session_id}/participants"
+        )
         return [ParticipantInfo(**participant) for participant in response_data]
 
-    async def generate_session_token(self, session_id: str, token_request: TokenRequest) -> TokenResponse:
+    async def generate_session_token(
+        self, session_id: str, token_request: TokenRequest
+    ) -> TokenResponse:
         response_data = await self.authorized_fetch(
-            f"/projects/{self.project_id}/sessions/{session_id}/token", method="POST", data=token_request.model_dump(mode="json", by_alias=True)
+            f"/projects/{self.project_id}/sessions/{session_id}/token",
+            method="POST",
+            data=token_request.model_dump(mode="json", by_alias=True),
         )
         return TokenResponse(**response_data)
 
     async def get_livekit_session_info(self, session_id: str) -> dict:
-        response_data = await self.authorized_fetch(f"/projects/{self.project_id}/sessions/{session_id}/livekit-session-info")
+        response_data = await self.authorized_fetch(
+            f"/projects/{self.project_id}/sessions/{session_id}/livekit-session-info"
+        )
         return response_data
 
     async def stop_session(self, session_id: str) -> ProjectSessionResponse:
         response_data = await self.authorized_fetch(
-            f"/projects/{self.project_id}/sessions/{session_id}/stop", method="POST", data={}
+            f"/projects/{self.project_id}/sessions/{session_id}/stop",
+            method="POST",
+            data={},
         )
         return ProjectSessionResponse(**response_data)
 
     async def register_device(self, device: RegisterDeviceRequest) -> DeviceResponse:
         response_data = await self.authorized_fetch(
-            f"/projects/{self.project_id}/devices/register", method="POST", data=device.dict()
+            f"/projects/{self.project_id}/devices/register",
+            method="POST",
+            data=device.dict(),
         )
         return DeviceResponse(**response_data)
 
     async def list_devices(self) -> List[DeviceResponse]:
-        response_data = await self.authorized_fetch(f"/projects/{self.project_id}/devices")
+        response_data = await self.authorized_fetch(
+            f"/projects/{self.project_id}/devices"
+        )
         return [DeviceResponse(**device) for device in response_data]
 
     async def list_device(self, device_id: str) -> DeviceResponse:
-        response_data = await self.authorized_fetch(f"/projects/{self.project_id}/devices/{device_id}")
+        response_data = await self.authorized_fetch(
+            f"/projects/{self.project_id}/devices/{device_id}"
+        )
         return DeviceResponse(**response_data)
 
     async def delete_device(self, device_id: str) -> DeviceResponse:
-        response_data = await self.authorized_fetch(f"/projects/{self.project_id}/devices/{device_id}", method="DELETE")
+        response_data = await self.authorized_fetch(
+            f"/projects/{self.project_id}/devices/{device_id}", method="DELETE"
+        )
         return DeviceResponse(**response_data)
 
     async def aclose(self):

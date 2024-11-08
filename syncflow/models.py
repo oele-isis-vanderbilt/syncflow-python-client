@@ -1,8 +1,10 @@
+import time
+from enum import Enum
+from typing import List, Optional
+
 from pydantic import BaseModel, ConfigDict, Field
 from pydantic.alias_generators import to_camel
-from typing import Optional, List
-from enum import Enum
-import time
+
 
 class ProjectTokenClaims(BaseModel):
     iat: int = Field()
@@ -71,75 +73,37 @@ class CreateSessionRequest(BaseModel):
 
 
 class VideoGrantsWrapper(BaseModel):
-    can_publish: bool = Field(
-        ...,
-        description="Permission to publish media streams"
-    )
+    can_publish: bool = Field(..., description="Permission to publish media streams")
 
-    can_publish_data: bool = Field(
-        ...,
-        description="Permission to publish data"
-    )
+    can_publish_data: bool = Field(..., description="Permission to publish data")
 
     can_publish_sources: List[str] = Field(
-        ...,
-        description="List of allowed publishing sources"
+        ..., description="List of allowed publishing sources"
     )
 
-    can_subscribe: bool = Field(
-        ...,
-        description="Permission to subscribe to streams"
-    )
+    can_subscribe: bool = Field(..., description="Permission to subscribe to streams")
 
     can_update_own_metadata: bool = Field(
-        ...,
-        description="Permission to update own metadata"
+        ..., description="Permission to update own metadata"
     )
 
-    hidden: bool = Field(
-        ...,
-        description="Whether the participant is hidden"
-    )
+    hidden: bool = Field(..., description="Whether the participant is hidden")
 
-    ingress_admin: bool = Field(
-        ...,
-        description="Permission to administer ingress"
-    )
+    ingress_admin: bool = Field(..., description="Permission to administer ingress")
 
-    recorder: bool = Field(
-        ...,
-        description="Permission to record"
-    )
+    recorder: bool = Field(..., description="Permission to record")
 
-    room: str = Field(
-        ...,
-        description="Room identifier"
-    )
+    room: str = Field(..., description="Room identifier")
 
-    room_admin: bool = Field(
-        ...,
-        description="Permission to administer the room"
-    )
+    room_admin: bool = Field(..., description="Permission to administer the room")
 
-    room_create: bool = Field(
-        ...,
-        description="Permission to create rooms"
-    )
+    room_create: bool = Field(..., description="Permission to create rooms")
 
-    room_join: bool = Field(
-        ...,
-        description="Permission to join rooms"
-    )
+    room_join: bool = Field(..., description="Permission to join rooms")
 
-    room_list: bool = Field(
-        ...,
-        description="Permission to list rooms"
-    )
+    room_list: bool = Field(..., description="Permission to list rooms")
 
-    room_record: bool = Field(
-        ...,
-        description="Permission to record rooms"
-    )
+    room_record: bool = Field(..., description="Permission to record rooms")
 
     model_config = ConfigDict(
         alias_generator=to_camel,
@@ -150,7 +114,7 @@ class VideoGrantsWrapper(BaseModel):
 
 class TokenRequest(BaseModel):
     identity: str = Field(
-        ...,  
+        ...,
         description="Identity of the token",
     )
 
@@ -160,7 +124,7 @@ class TokenRequest(BaseModel):
     )
 
     video_grants: VideoGrantsWrapper = Field(
-        ..., 
+        ...,
         description="Video permissions and grant settings for the token",
     )
 
@@ -228,6 +192,7 @@ class DeviceResponse(BaseModel):
         populate_by_name=True,
         from_attributes=True,
     )
+
 
 class ProjectSummary(BaseModel):
     num_sessions: int

@@ -3,7 +3,8 @@ name = "syncflow"
 version = "0.0.1"
 description = "Reusable Python client implementation for SyncFlow."
 authors = [
-    {name = "Umesh Timalsina", email="umesh.timalsina@vanderbilt.edu"}
+    {name = "Umesh Timalsina", email="umesh.timalsina@vanderbilt.edu"},
+    {name = "Nihar Sanda", email = "nihar.purshottam.sanda@vanderbilt.edu"}
 ]
 license = {file = "LICENSE"}
 readme = "README.md"
