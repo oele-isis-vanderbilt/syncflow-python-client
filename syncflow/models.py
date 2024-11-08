@@ -1,6 +1,7 @@
 from pydantic import BaseModel, ConfigDict, Field
 from pydantic.alias_generators import to_camel
 from typing import Optional, List
+from enum import Enum
 import time
 
 class ProjectTokenClaims(BaseModel):
@@ -175,6 +176,12 @@ class ProjectSessionResponse(BaseModel):
     project_id: str
     status: str
 
+    model_config = ConfigDict(
+        alias_generator=to_camel,
+        populate_by_name=True,
+        from_attributes=True,
+    )
+
 
 class ProjectInfo(BaseModel):
     id: str
@@ -186,11 +193,23 @@ class ProjectInfo(BaseModel):
     endpoint: str
     last_updated: int
 
+    model_config = ConfigDict(
+        alias_generator=to_camel,
+        populate_by_name=True,
+        from_attributes=True,
+    )
+
 
 class TokenResponse(BaseModel):
     token: str
     identity: str
     livekit_server_url: Optional[str]
+
+    model_config = ConfigDict(
+        alias_generator=to_camel,
+        populate_by_name=True,
+        from_attributes=True,
+    )
 
 
 class DeviceResponse(BaseModel):
@@ -203,3 +222,45 @@ class DeviceResponse(BaseModel):
     project_id: str
     session_notification_exchange_name: Optional[str]
     session_notification_binding_key: Optional[str]
+
+    model_config = ConfigDict(
+        alias_generator=to_camel,
+        populate_by_name=True,
+        from_attributes=True,
+    )
+
+class ProjectSummary(BaseModel):
+    num_sessions: int
+    num_active_sessions: int
+    num_participants: int
+    num_recordings: int
+
+    model_config = ConfigDict(
+        alias_generator=to_camel,
+        populate_by_name=True,
+        from_attributes=True,
+    )
+
+
+class ParticipantState(str, Enum):
+    CONNECTED = "CONNECTED"
+    DISCONNECTED = "DISCONNECTED"
+    JOINING = "JOINING"
+
+
+class ParticipantInfo(BaseModel):
+    id: str
+    identity: str
+    name: Optional[str] = None
+    state: ParticipantState
+    tracks: List[dict]
+    metadata: str
+    joined_at: int
+    permission: dict
+    is_publisher: bool
+
+    model_config = ConfigDict(
+        alias_generator=to_camel,
+        populate_by_name=True,
+        from_attributes=True,
+    )
