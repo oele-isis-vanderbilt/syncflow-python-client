@@ -5,7 +5,7 @@ import json
 
 from dotenv import load_dotenv
 
-from syncflow.models import CreateSessionRequest, RegisterDeviceRequest, TokenRequest
+from syncflow.models import CreateSessionRequest, RegisterDeviceRequest, TokenRequest, VideoGrantsWrapper
 from syncflow.project_client import ProjectClient
 
 
@@ -87,8 +87,11 @@ async def list_participants(args, client):
 
 async def generate_token(args, client):
     """Generate a session token"""
+    session = await client.list_session(args.session_id)
+    print(session)
+    video_grants = VideoGrantsWrapper(room=session.name)
     request = TokenRequest(
-        participant_id=args.participant_id, participant_name=args.participant_name
+        identity=args.participant_id, name=args.participant_name, video_grants=video_grants
     )
     token = await client.generate_session_token(args.session_id, request)
     if args.json:
