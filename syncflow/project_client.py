@@ -50,9 +50,12 @@ class ProjectClient:
         return self._api_token
 
     def is_expired(self, token):
-        decoded_jwt = jwt.decode(token, self.api_secret, algorithms=["HS256"])
-        api_token = ProjectTokenClaims.model_validate(decoded_jwt)
-        return api_token.is_expired()
+        try:
+            decoded_jwt = jwt.decode(token, self.api_secret, algorithms=["HS256"])
+            api_token = ProjectTokenClaims.model_validate(decoded_jwt)
+            return api_token.is_expired()
+        except:
+            return True
 
     async def authorized_fetch(self, url, method="GET", data=None):
         """
