@@ -88,7 +88,7 @@ class VideoGrantsWrapper(BaseModel):
     )
 
     can_publish_sources: List[str] = Field(
-        default=["camera", "micropohone", "screen_share", "screen_share_audio"],
+        default=["camera", "microphone", "screen_share", "screen_share_audio"],
         description="List of allowed publishing sources",
     )
 
