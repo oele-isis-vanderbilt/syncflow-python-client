@@ -79,15 +79,22 @@ class CreateSessionRequest(BaseModel):
 
 
 class VideoGrantsWrapper(BaseModel):
-    can_publish: bool = Field(default=True, description="Permission to publish media streams")
-
-    can_publish_data: bool = Field(default=True, description="Permission to publish data")
-
-    can_publish_sources: List[str] = Field(
-        default=['camera', 'micropohone', 'screen_share', 'screen_share_audio'], description="List of allowed publishing sources"
+    can_publish: bool = Field(
+        default=True, description="Permission to publish media streams"
     )
 
-    can_subscribe: bool = Field(default=True, description="Permission to subscribe to streams")
+    can_publish_data: bool = Field(
+        default=True, description="Permission to publish data"
+    )
+
+    can_publish_sources: List[str] = Field(
+        default=["camera", "microphone", "screen_share", "screen_share_audio"],
+        description="List of allowed publishing sources",
+    )
+
+    can_subscribe: bool = Field(
+        default=True, description="Permission to subscribe to streams"
+    )
 
     can_update_own_metadata: bool = Field(
         default=True, description="Permission to update own metadata"
@@ -95,13 +102,17 @@ class VideoGrantsWrapper(BaseModel):
 
     hidden: bool = Field(default=False, description="Whether the participant is hidden")
 
-    ingress_admin: bool = Field(default=False, description="Permission to administer ingress")
+    ingress_admin: bool = Field(
+        default=False, description="Permission to administer ingress"
+    )
 
     recorder: bool = Field(default=False, description="Permission to record")
 
     room: str = Field(..., description="Room identifier")
 
-    room_admin: bool = Field(default=False, description="Permission to administer the room")
+    room_admin: bool = Field(
+        default=False, description="Permission to administer the room"
+    )
 
     room_create: bool = Field(default=False, description="Permission to create rooms")
 
@@ -141,6 +152,77 @@ class TokenRequest(BaseModel):
     )
 
 
+class MultimediaDetailsResponse(BaseModel):
+    file_name: Optional[str] = None
+    destination: Optional[str] = None
+    publisher: Optional[str] = None
+    track_id: Optional[str] = None
+    presigned_url: Optional[str] = None
+    presigned_url_expires: Optional[int] = None
+    recording_start_time: Optional[int] = None
+
+    model_config = ConfigDict(
+        alias_generator=to_camel,
+        populate_by_name=True,
+        from_attributes=True,
+    )
+
+
+class ParticipantTrackResponse(BaseModel):
+    id: str
+    sid: str
+    name: Optional[str] = None
+    kind: str
+    source: str
+    participant_id: str
+    multimedia_details: Optional[MultimediaDetailsResponse] = None
+
+    model_config = ConfigDict(
+        alias_generator=to_camel,
+        populate_by_name=True,
+        from_attributes=True,
+    )
+
+
+class SessionParticipantResponse(BaseModel):
+    id: str
+    identity: str
+    name: Optional[str]
+    joined_at: int
+    left_at: Optional[int] = None
+    session_id: str
+    tracks: List[ParticipantTrackResponse] = Field(
+        default_factory=list,
+        description="List of tracks in the session for the participant",
+    )
+
+    model_config = ConfigDict(
+        alias_generator=to_camel,
+        populate_by_name=True,
+        from_attributes=True,
+    )
+
+
+class SessionEgressResponse(BaseModel):
+    id: str
+    track_id: str
+    egress_id: str
+    started_at: int
+    egress_type: Optional[str] = None
+    status: str
+    destination: Optional[str] = None
+    room_name: str
+    session_id: str
+    participant_id: Optional[str] = None
+    db_track_id: Optional[str] = None
+
+    model_config = ConfigDict(
+        alias_generator=to_camel,
+        populate_by_name=True,
+        from_attributes=True,
+    )
+
+
 class ProjectSessionResponse(BaseModel):
     id: str
     name: str
@@ -151,6 +233,15 @@ class ProjectSessionResponse(BaseModel):
     livekit_room_name: str
     project_id: str
     status: str
+    num_participants: int
+    num_recordings: int
+    participants: List[SessionParticipantResponse] = Field(
+        default_factory=list, description="List of participants in the session"
+    )
+    recordings: List[SessionEgressResponse] = Field(
+        default_factory=list, description="List of recordings in the session"
+    )
+    duration: int
 
     model_config = ConfigDict(
         alias_generator=to_camel,

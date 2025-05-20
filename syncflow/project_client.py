@@ -118,7 +118,7 @@ class ProjectClient:
             data=new_session_request.model_dump(by_alias=True),
         )
         return ProjectSessionResponse(**response_data)
- 
+
     async def list_sessions(self) -> List[ProjectSessionResponse]:
         response_data = await self.authorized_fetch(
             f"/projects/{self.project_id}/sessions"
